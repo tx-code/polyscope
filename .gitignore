@@ -4,6 +4,7 @@ build_debug/
 misc/file2c/file2cpp
 
 # Editor and OS things
+.idea/
 imgui.ini
 .DS_Store
 .vscode

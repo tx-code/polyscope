@@ -1,14 +1,18 @@
+#include "geometrycentral/surface/boundary_first_flattening.h"
 #include "geometrycentral/surface/common_subdivision.h"
+#include "geometrycentral/surface/heat_method_distance.h"
 #include "geometrycentral/surface/manifold_surface_mesh.h"
 #include "geometrycentral/surface/meshio.h"
 #include "geometrycentral/surface/signpost_intrinsic_triangulation.h"
 #include "geometrycentral/surface/surface_centers.h"
-#include "geometrycentral/surface/boundary_first_flattening.h"
+
 
 #include "polyscope/curve_network.h"
+#include "polyscope/pick.h"
 #include "polyscope/point_cloud.h"
 #include "polyscope/polyscope.h"
 #include "polyscope/surface_mesh.h"
+
 
 #include "args.hxx"
 #include "imgui.h"
@@ -46,6 +50,13 @@ float signpostMinAngleDeg = 0.;
 
 // Output options
 std::string outputPrefix;
+
+std::unique_ptr<HeatMethodDistanceSolver> heatSolver;
+VertexData<double> distances;
+bool showDistances = false;
+SurfacePoint sourcePoint;
+bool hasSource = false;
+bool waitingForPick = false;
 
 void updateTriagulationViz() {
   if (!withGUI) {
@@ -375,32 +386,29 @@ void myCallback() {
     ImGui::TreePop();
   }
 
-  if(ImGui::TreeNode("Parameterization")) {
-    if(ImGui::Button("Run BFF Parameterization")) {
+  if (ImGui::TreeNode("Parameterization")) {
+    if (ImGui::Button("Run BFF Parameterization")) {
       try {
-        if(mesh->hasBoundary()) {
-           BFF bff(*mesh, *geometry);
-           uvCoords = bff.flatten();
+        if (mesh->hasBoundary()) {
+          BFF bff(*mesh, *geometry);
+          uvCoords = bff.flatten();
 
-           // Visualize the parameterization
-           psMesh->addVertexParameterizationQuantity("UV Coords", uvCoords);
-           showParameterization = true;
-        }
-        else {
+          // Visualize the parameterization
+          psMesh->addVertexParameterizationQuantity("UV Coords", uvCoords);
+          showParameterization = true;
+        } else {
           polyscope::warning("Mesh must have boundary for BFF parameterization");
         }
-      }
-      catch(const std::exception& e) {
+      } catch (const std::exception& e) {
         polyscope::warning("Error during BFF parameterization: %s", e.what());
       }
     }
 
-    if(showParameterization) {
+    if (showParameterization) {
       ImGui::Checkbox("show parameterization", &showParameterization);
-      if(showParameterization) {
+      if (showParameterization) {
         psMesh->getQuantity("UV Coords")->setEnabled(true);
-      }
-      else {
+      } else {
         psMesh->getQuantity("UV Coords")->setEnabled(false);
       }
     }
@@ -413,6 +421,56 @@ void myCallback() {
     if (ImGui::Button("vertex positions")) outputVertexPositions();
     if (ImGui::Button("Laplace matrix")) outputLaplaceMat();
     if (ImGui::Button("interpolate matrix")) outputInterpolatMat();
+
+    ImGui::TreePop();
+  }
+
+  if (ImGui::TreeNode("Heat Method Distance")) {
+
+    if (!heatSolver) {
+      // Initialize solver first time
+      heatSolver.reset(new HeatMethodDistanceSolver(*geometry));
+    }
+
+    // Show current source point status
+    if (hasSource) {
+      ImGui::Text("Source point selected");
+    } else {
+      ImGui::Text("No source point selected");
+    }
+
+    if (ImGui::Button("Select Random Source Vertex")) {
+      // Get random vertex index
+      size_t randomIndex = rand() % mesh->nVertices();
+      Vertex sourceVertex = mesh->vertex(randomIndex);
+      sourcePoint = SurfacePoint(sourceVertex);
+
+      // Compute distances
+      distances = heatSolver->computeDistance(sourcePoint);
+
+      // Visualize
+      psMesh->addVertexScalarQuantity("distances", distances);
+      showDistances = true;
+      hasSource = true;
+    }
+
+    if (showDistances) {
+      ImGui::Checkbox("Show distances", &showDistances);
+      if (showDistances) {
+        psMesh->getQuantity("distances")->setEnabled(true);
+      } else {
+        psMesh->getQuantity("distances")->setEnabled(false);
+      }
+
+      // Show distance statistics
+      if (hasSource) {
+        double maxDist = 0;
+        for (Vertex v : mesh->vertices()) {
+          maxDist = std::max(maxDist, distances[v]);
+        }
+        ImGui::Text("Maximum distance: %.3f", maxDist);
+      }
+    }
 
     ImGui::TreePop();
   }
