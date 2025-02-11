@@ -1,6 +1,6 @@
 # Maybe stop from CMAKEing in the wrong place
-if (CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
-    message(FATAL_ERROR "Source and build directories cannot be the same. Go use the /build directory.")
+if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
+  message(FATAL_ERROR "Source and build directories cannot be the same. Go use the /build directory.")
 endif()
 
 SET(INCLUDE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../include/polyscope/")
@@ -17,25 +17,25 @@ endif()
 
 # Add the main _engine file no matter what. All of the interesting parts are ifdef'd out, and this
 # allows us to resolve stubs.
-list (APPEND BACKEND_SRCS
-    render/opengl/gl_engine.cpp
-    render/opengl/gl_engine_glfw.cpp
-    render/opengl/gl_engine_egl.cpp
-    render/mock_opengl/mock_gl_engine.cpp
-    render/opengl/shaders/texture_draw_shaders.cpp
-    render/opengl/shaders/lighting_shaders.cpp
-    render/opengl/shaders/grid_shaders.cpp
-    render/opengl/shaders/ground_plane_shaders.cpp
-    render/opengl/shaders/gizmo_shaders.cpp
-    render/opengl/shaders/histogram_shaders.cpp
-    render/opengl/shaders/surface_mesh_shaders.cpp
-    render/opengl/shaders/volume_mesh_shaders.cpp
-    render/opengl/shaders/vector_shaders.cpp
-    render/opengl/shaders/sphere_shaders.cpp
-    render/opengl/shaders/ribbon_shaders.cpp
-    render/opengl/shaders/cylinder_shaders.cpp
-    render/opengl/shaders/rules.cpp
-    render/opengl/shaders/common.cpp
+list(APPEND BACKEND_SRCS
+  render/opengl/gl_engine.cpp
+  render/opengl/gl_engine_glfw.cpp
+  render/opengl/gl_engine_egl.cpp
+  render/mock_opengl/mock_gl_engine.cpp
+  render/opengl/shaders/texture_draw_shaders.cpp
+  render/opengl/shaders/lighting_shaders.cpp
+  render/opengl/shaders/grid_shaders.cpp
+  render/opengl/shaders/ground_plane_shaders.cpp
+  render/opengl/shaders/gizmo_shaders.cpp
+  render/opengl/shaders/histogram_shaders.cpp
+  render/opengl/shaders/surface_mesh_shaders.cpp
+  render/opengl/shaders/volume_mesh_shaders.cpp
+  render/opengl/shaders/vector_shaders.cpp
+  render/opengl/shaders/sphere_shaders.cpp
+  render/opengl/shaders/ribbon_shaders.cpp
+  render/opengl/shaders/cylinder_shaders.cpp
+  render/opengl/shaders/rules.cpp
+  render/opengl/shaders/common.cpp
 )
 
 # Configure the render backend(s)
@@ -49,35 +49,35 @@ if("${POLYSCOPE_BACKEND_OPENGL3_GLFW}")
 
   # Link settings
   list(APPEND BACKEND_LIBS
-    glfw
+    glfw3
   )
 
   if(APPLE)
-      # On macOS, get openGL & friends from Frameworks; do not use GLAD at all
+    # On macOS, get openGL & friends from Frameworks; do not use GLAD at all
 
-      # NOTE: This code is essentially duplicated here and in deps/imgui/CMakeLists.txt
+    # NOTE: This code is essentially duplicated here and in deps/imgui/CMakeLists.txt
 
-      # Apple is playing hardball and deprecating openGL... we'll cross that bridge when we come to it
-      # Silence warnings about openGL deprecation
-      add_definitions(-DGL_SILENCE_DEPRECATION)
+    # Apple is playing hardball and deprecating openGL... we'll cross that bridge when we come to it
+    # Silence warnings about openGL deprecation
+    add_definitions(-DGL_SILENCE_DEPRECATION)
 
-      find_library(cocoa_library Cocoa)
-      find_library(opengl_library OpenGL)
-      find_library(corevideo_library CoreVideo)
-      find_library(iokit_library IOKit)
-      list(APPEND BACKEND_LIBS ${cocoa_library} ${opengl_library} ${corevideo_library} ${iokit_library})
+    find_library(cocoa_library Cocoa)
+    find_library(opengl_library OpenGL)
+    find_library(corevideo_library CoreVideo)
+    find_library(iokit_library IOKit)
+    list(APPEND BACKEND_LIBS ${cocoa_library} ${opengl_library} ${corevideo_library} ${iokit_library})
   else()
-      # On Windows/Linux, use the glad openGL loader
-
-      list(APPEND BACKEND_LIBS glad)
+    # On Windows/Linux, use the glad openGL loader
+    list(APPEND BACKEND_LIBS glad)
   endif()
 
   add_definitions(-DPOLYSCOPE_BACKEND_OPENGL3_GLFW_ENABLED)
 endif()
 
-## some logic to decide whether or not EGL is available and whether we want to build with it
+# # some logic to decide whether or not EGL is available and whether we want to build with it
 include(CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("EGL/egl.h" HAVE_EGL_LIB)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   set(IS_LINUX TRUE)
 else()
@@ -95,24 +95,20 @@ elseif(POLYSCOPE_BACKEND_OPENGL3_EGL) # if "TRUE" (or "ON" or "YES" etc etc)
   if(NOT IS_LINUX)
     message(FATAL_ERROR "EGL backend is only supported on linux. Disable it with POLYSCOPE_BACKEND_OPENGL3_EGL=False")
   endif()
+
   if(NOT HAVE_EGL_LIB)
     message(FATAL_ERROR "EGL backend requires EGL headers, but 'EGL/egl.h' was not found. On Ubuntu, try 'apt-get install libegl1-mesa-dev'")
   endif()
 
-  # we should be good-to-go for EGL
-
+# we should be good-to-go for EGL
 else()
   # nothing to do, already disabled
 endif()
-
-
-
 
 if("${POLYSCOPE_BACKEND_OPENGL3_EGL}")
   message("Polyscope backend openGL3_egl enabled")
 
   # this only supports headless rendering, and as of Mar 2024 headless rendering seems to only be available on nvidia drivers.
-
   list(APPEND BACKEND_HEADERS
     ${INCLUDE_ROOT}render/opengl/gl_engine_egl.h
     ${INCLUDE_ROOT}render/opengl/shaders/common.h
@@ -121,7 +117,6 @@ if("${POLYSCOPE_BACKEND_OPENGL3_EGL}")
   if(APPLE)
     message(FATAL_ERROR "Compiling EGL backed on APPLE is not supported. Set POLYSCOPE_BACKEND_OPENGL3_EGL=False")
   else()
-
     # On Windows/Linux, use the glad openGL loader
     list(APPEND BACKEND_LIBS glad)
 
@@ -132,9 +127,8 @@ if("${POLYSCOPE_BACKEND_OPENGL3_EGL}")
 
       # We intentionally *do not* list this as a shared library dependency, it gets loaded optionally at runtime
       # via dlopen(). See explanation in gl_engine_egl.cpp.
-      # list(APPEND BACKEND_LIBS EGL) 
+      # list(APPEND BACKEND_LIBS EGL)
     endif()
-
   endif()
 
   add_definitions(-DPOLYSCOPE_BACKEND_OPENGL3_EGL_ENABLED)
@@ -150,7 +144,6 @@ if("${POLYSCOPE_BACKEND_OPENGL_MOCK}")
 
   add_definitions(-DPOLYSCOPE_BACKEND_OPENGL_MOCK_ENABLED)
 endif()
-
 
 SET(SRCS
 
@@ -191,7 +184,7 @@ SET(SRCS
   weak_handle.cpp
   marching_cubes.cpp
 
-  ## Structures
+  # # Structures
 
   # Point cloud
   point_cloud.cpp
@@ -246,7 +239,7 @@ SET(SRCS
   imgui_config.cpp
   fullscreen_artist.cpp
 
-  ## Embedded binary data
+  # # Embedded binary data
   render/bindata/bindata_font_lato_regular.cpp
   render/bindata/bindata_font_cousine_regular.cpp
   render/bindata/concrete_seamless.cpp
@@ -259,7 +252,6 @@ SET(SRCS
   render/bindata/bindata_jade.cpp
   render/bindata/bindata_normal.cpp
 )
-
 
 # Setting headers is useful for some build systems. For instance, in Visual Studio this is necessary for the header files to be indexed as a part of the project.
 SET(HEADERS
@@ -378,5 +370,10 @@ add_definitions(-DNOMINMAX)
 target_include_directories(polyscope PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../include")
 
 # Link settings
-target_link_libraries(polyscope PUBLIC imgui glm::glm)
+find_package(glm REQUIRED)
+target_compile_definitions(polyscope PUBLIC GLM_ENABLE_EXPERIMENTAL)
+
+find_package(nlohmann_json REQUIRED)
+
+target_link_libraries(polyscope PUBLIC imgui glm::glm-header-only)
 target_link_libraries(polyscope PRIVATE "${BACKEND_LIBS}" stb nlohmann_json::nlohmann_json MarchingCube::MarchingCube)

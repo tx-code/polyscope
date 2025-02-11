@@ -16,10 +16,10 @@
 
 #include "stb_image.h"
 
-#include "nlohmann/json.hpp"
+#include "nlohmann/json.hpp/json.hpp"
 using json = nlohmann::json;
 
-#include "backends/imgui_impl_opengl3.h"
+#include "imgui_impl_opengl3.h"
 
 namespace polyscope {
 
