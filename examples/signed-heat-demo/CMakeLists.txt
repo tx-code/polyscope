@@ -4,33 +4,33 @@
 if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # using Clang (linux or apple) or GCC
     message("Using clang/gcc compiler flags")
-    SET(BASE_CXX_FLAGS "-std=c++11 -Wall -Wextra -g3")
-    SET(DISABLED_WARNINGS " -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-missing-braces -Wno-unused-private-field")
+    SET(CMAKE_CXX_STANDARD 11)
+    SET(BASE_CXX_FLAGS "-std=c++11 -Wall -Wextra")
+    SET(DISABLED_WARNINGS " -Wno-unused-parameter -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -Wno-missing-braces -Wno-unused-label -Wno-register -Wno-sign-compare -Wno-unknown-pragmas -Wno-unused-result -Wno-narrowing -Wno-unused-but-set-variable -Wno-unused-lambda-capture -Wno-unused-local-typedefs")
     SET(TRACE_INCLUDES " -H -Wno-error=unused-command-line-argument")
 
     if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
         message("Setting clang-specific options")
-        SET(BASE_CXX_FLAGS "${BASE_CXX_FLAGS} -ferror-limit=3 -fcolor-diagnostics")
-        SET(CMAKE_CXX_FLAGS_DEBUG "-fsanitize=address -fno-limit-debug-info")
+        SET(BASE_CXX_FLAGS "${BASE_CXX_FLAGS} -ferror-limit=3 -Wfatal-errors -fcolor-diagnostics")
+        SET(CMAKE_CXX_FLAGS_DEBUG "-g3 -fsanitize=address -fno-limit-debug-info")
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         message("Setting gcc-specific options")
         SET(BASE_CXX_FLAGS "${BASE_CXX_FLAGS} -fmax-errors=5")
+        SET(CMAKE_CXX_FLAGS_DEBUG "-g3")
         SET(DISABLED_WARNINGS "${DISABLED_WARNINGS} -Wno-maybe-uninitialized -Wno-format-zero-length -Wno-unused-but-set-parameter -Wno-unused-but-set-variable")
     endif()
 
-    SET(CMAKE_CXX_FLAGS "${BASE_CXX_FLAGS} ${DISABLED_WARNINGS}")
-    SET(CMAKE_CXX_FLAGS_DEBUG "-g3")
+    SET(CMAKE_CXX_FLAGS "${BASE_CXX_FLAGS} ${DISABLED_WARNINGS} -std=c++11")
 
     include(CheckCXXCompilerFlag)
+    unset(COMPILER_SUPPORTS_MARCH_NATIVE CACHE)
     CHECK_CXX_COMPILER_FLAG(-march=native COMPILER_SUPPORTS_MARCH_NATIVE)
 
     if(COMPILER_SUPPORTS_MARCH_NATIVE)
-        set(MARCH_NATIVE "-march=native")
+        SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG -std=c++11")
     else()
-        set(MARCH_NATIVE "")
+        SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -mcpu=apple-m1 -DNDEBUG -std=c++11") # Apple M1
     endif()
-
-    SET(CMAKE_CXX_FLAGS_RELEASE "${MARCH_NATIVE} -O3 -DNDEBUG")
 
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     # using Visual Studio C++
@@ -52,14 +52,27 @@ else()
     message(FATAL_ERROR "Unrecognized compiler [${CMAKE_CXX_COMPILER_ID}]")
 endif()
 
+# == Build our project stuff
 set(SRCS
-    main.cpp
-
-    # add any other source files here
+    src/utils.cpp
+    src/main.cpp
 )
 
-add_executable(int_tri "${SRCS}")
+add_executable(signed-heat-demo "${SRCS}")
+target_include_directories(signed-heat-demo PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
 find_package(args REQUIRED)
 find_package(imgui CONFIG REQUIRED)
-target_include_directories(int_tri PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-target_link_libraries(int_tri geometry-central polyscope imgui::imgui taywee::args)
+target_link_libraries(signed-heat-demo geometry-central polyscope imgui::imgui taywee::args)
+
+# Copy data directory to bin directory after build
+add_custom_command(TARGET signed-heat-demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/data"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/data"
+    "${CMAKE_CURRENT_BINARY_DIR}/data"
+    VERBATIM
+)
+
+message(STATUS "Source data dir: ${CMAKE_CURRENT_SOURCE_DIR}/data")
+message(STATUS "Target data dir: ${CMAKE_CURRENT_BINARY_DIR}/data")

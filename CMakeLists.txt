@@ -18,9 +18,12 @@ add_subdirectory(deps)
 # ## Add things for this project
 add_subdirectory(src)
 
+add_subdirectory(deps/geometry-central)
+
 set(BUILD_EXAMPLES "ON" CACHE BOOL "BUILD Examples")
 
 if(BUILD_EXAMPLES)
     add_subdirectory(examples/demo-app)
     add_subdirectory(examples/navigating-intrinsic-triangulations-demo)
+    add_subdirectory(examples/signed-heat-demo)
 endif()
