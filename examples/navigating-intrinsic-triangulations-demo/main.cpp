@@ -3,6 +3,7 @@
 #include "geometrycentral/surface/meshio.h"
 #include "geometrycentral/surface/signpost_intrinsic_triangulation.h"
 #include "geometrycentral/surface/surface_centers.h"
+#include "geometrycentral/surface/boundary_first_flattening.h"
 
 #include "polyscope/curve_network.h"
 #include "polyscope/point_cloud.h"
@@ -35,6 +36,9 @@ float refineDegreeThresh = 25;
 bool useRefineSizeThresh = false;
 bool useInsertionsMax;
 int insertionsMax = -2;
+bool showParameterization = false;
+
+VertexData<Vector2> uvCoords;
 
 // Mesh stats
 bool signpostIsDelaunay = true;
@@ -367,6 +371,38 @@ void myCallback() {
 
     if (ImGui::Button("Delaunay refine")) {
       refineDelaunayTriangulation();
+    }
+    ImGui::TreePop();
+  }
+
+  if(ImGui::TreeNode("Parameterization")) {
+    if(ImGui::Button("Run BFF Parameterization")) {
+      try {
+        if(mesh->hasBoundary()) {
+           BFF bff(*mesh, *geometry);
+           uvCoords = bff.flatten();
+
+           // Visualize the parameterization
+           psMesh->addVertexParameterizationQuantity("UV Coords", uvCoords);
+           showParameterization = true;
+        }
+        else {
+          polyscope::warning("Mesh must have boundary for BFF parameterization");
+        }
+      }
+      catch(const std::exception& e) {
+        polyscope::warning("Error during BFF parameterization: %s", e.what());
+      }
+    }
+
+    if(showParameterization) {
+      ImGui::Checkbox("show parameterization", &showParameterization);
+      if(showParameterization) {
+        psMesh->getQuantity("UV Coords")->setEnabled(true);
+      }
+      else {
+        psMesh->getQuantity("UV Coords")->setEnabled(false);
+      }
     }
     ImGui::TreePop();
   }
