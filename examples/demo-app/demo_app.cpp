@@ -22,15 +22,16 @@
 #include <unordered_set>
 #include <utility>
 
-#include "args/args.hxx"
+#include "args.hxx"
 #include "happly.h"
-#include "nlohmann/json.hpp"
+#include "nlohmann/json.hpp/json.hpp"
 
 #include "simple_dot_mesh_parser.h"
 #include "surface_mesh_io.h"
 
 #include "glm/gtx/string_cast.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 

@@ -49,7 +49,7 @@ if("${POLYSCOPE_BACKEND_OPENGL3_GLFW}")
 
   # Link settings
   list(APPEND BACKEND_LIBS
-    glfw3
+    glfw
   )
 
   if(APPLE)
@@ -68,7 +68,7 @@ if("${POLYSCOPE_BACKEND_OPENGL3_GLFW}")
     list(APPEND BACKEND_LIBS ${cocoa_library} ${opengl_library} ${corevideo_library} ${iokit_library})
   else()
     # On Windows/Linux, use the glad openGL loader
-    list(APPEND BACKEND_LIBS glad)
+    list(APPEND BACKEND_LIBS glad::glad)
   endif()
 
   add_definitions(-DPOLYSCOPE_BACKEND_OPENGL3_GLFW_ENABLED)
@@ -374,6 +374,11 @@ find_package(glm REQUIRED)
 target_compile_definitions(polyscope PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 find_package(nlohmann_json REQUIRED)
+find_package(imgui REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(glad REQUIRED)
+find_package(stb REQUIRED)
 
-target_link_libraries(polyscope PUBLIC imgui glm::glm-header-only)
-target_link_libraries(polyscope PRIVATE "${BACKEND_LIBS}" stb nlohmann_json::nlohmann_json MarchingCube::MarchingCube)
+target_include_directories(polyscope PUBLIC "${Stb_INCLUDE_DIR}")
+target_link_libraries(polyscope PUBLIC imgui::imgui glm::glm-header-only)
+target_link_libraries(polyscope PRIVATE "${BACKEND_LIBS}" nlohmann_json::nlohmann_json MarchingCube::MarchingCube)
