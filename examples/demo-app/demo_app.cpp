@@ -30,8 +30,6 @@
 #include "surface_mesh_io.h"
 
 #include "glm/gtx/string_cast.hpp"
-
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
 

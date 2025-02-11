@@ -21,6 +21,6 @@ add_subdirectory(src)
 set(BUILD_EXAMPLES "ON" CACHE BOOL "BUILD Examples")
 
 if(BUILD_EXAMPLES)
-    # add_subdirectory(examples/demo-app)
+    add_subdirectory(examples/demo-app)
     add_subdirectory(examples/navigating-intrinsic-triangulations-demo)
 endif()
