@@ -390,7 +390,7 @@ int main(int argc, char** argv) {
   // clang-format off
   args::ArgumentParser parser("A demo of Navigating Intrinsic Triangulations");
   args::HelpFlag help(parser, "help", "Display this help message", {'h', "help"});
-  args::Positional<std::string> inputFilename(parser, "mesh", "A .obj or .ply mesh file.");
+  args::ValueFlag<std::string> inputFilename(parser, "mesh", "A .obj or .ply mesh file.", {"input"}, "./face.obj");
 
   args::Group triangulation(parser, "triangulation");
   args::Flag flipDelaunay(triangulation, "flipDelaunay", "Flip edges to make the mesh intrinsic Delaunay", {"flipDelaunay"});
@@ -424,7 +424,7 @@ int main(int argc, char** argv) {
   }
 
   // Make sure a mesh name was given
-  if (!inputFilename) {
+  if (inputFilename.Get() == "") {
     std::cout << parser;
     return EXIT_FAILURE;
   }
