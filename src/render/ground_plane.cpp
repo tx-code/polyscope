@@ -7,6 +7,9 @@
 #include "polyscope/render/material_defs.h"
 
 #include "imgui.h"
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#endif
 #include "stb_image.h"
 
 namespace polyscope {
